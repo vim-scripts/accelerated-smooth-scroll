@@ -1,0 +1,14 @@
+This is a mirror of http://www.vim.org/scripts/script.php?script_id=4640
+
+Vim plugin for accelerated smooth scroll.
+
+The *accelerated-smooth-scroll* plugin makes scrolling with a smooth animation in Vim.
+Moreover, the scroll speed will be accelerated, if you consecutively scroll.
+
+`<C-D>/<C-U>` and `<C-F>/<C-B>` keys are replaced by default.
+
+Introduction Movie:
+ - http://www.youtube.com/watch?v=mGMgAiS8Xtg
+
+Repository:
+- https://github.com/yonchu/accelerated-smooth-scroll 
