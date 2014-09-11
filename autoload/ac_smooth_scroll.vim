@@ -16,9 +16,9 @@ endfunction
 
 augroup ac-smooth-scroll-dummy-group
   autocmd!
+  autocmd ac-smooth-scroll-dummy-group User AcSmoothScrollEnter silent! execute ''
+  autocmd ac-smooth-scroll-dummy-group User AcSmoothScrollLeave silent! execute ''
 augroup END
-autocmd ac-smooth-scroll-dummy-group User AcSmoothScrollEnter silent! execute ''
-autocmd ac-smooth-scroll-dummy-group User AcSmoothScrollLeave silent! execute ''
 
 let s:cache_command = {}
 function! s:doautocmd_user(command)
@@ -36,28 +36,16 @@ function! s:calc_step(wlcount)
   if !g:ac_smooth_scroll_enable_accelerating
     return 1
   endif
-  let step = g:ac_smooth_scroll_calc_step(s:key_count, a:wlcount)
+  let step = AcSmoothScrollCalcStep(s:key_count, a:wlcount)
   return step
 endfunction
 
 function! s:calc_sleep_time_msec(sleep_time_msec)
-  return g:ac_smooth_scroll_calc_sleep_time_msec(s:key_count, a:sleep_time_msec)
+  return AcSmoothScrollCalcSleepTimeMsec(s:key_count, a:sleep_time_msec)
 endfunction
 
 function! s:calc_skip_redraw_line_size()
-  return g:ac_smooth_scroll_calc_skip_redraw_line_size(s:key_count, g:ac_smooth_scroll_skip_redraw_line_size)
-endfunction
-
-function! s:next_line_num(cmd, lnum, step)
-  if a:cmd == 'j'
-    let lnum = a:lnum + a:step
-  else
-    let lnum = a:lnum - a:step
-    if lnum < 1
-      let lnum = 1
-    endif
-  endif
-  return lnum
+  return AcSmoothScrollCalcSkipRedrawLineSize(s:key_count, g:ac_smooth_scroll_skip_redraw_line_size)
 endfunction
 
 function! s:scroll(cmd, step, sleep_time_msec, skip_redraw_line_size, wlcount, is_vmode)
@@ -181,23 +169,37 @@ function! ac_smooth_scroll#scroll(cmd, windiv, sleep_time_msec, is_vmode)
 
   " Disable highlight the screen line of the cursor,
   " because will make screen redrawing slower.
-  let save_cul = &cul
-  let save_vb = &vb
-  let save_t_vb = &t_vb
+  let save_cul = &l:cul
+  let save_vb = &l:vb
+  let save_t_vb = &l:t_vb
+
   if save_cul
-    set nocul
+    setl nocul
   endif
   if !save_vb
-    set vb
+    setl vb
   endif
-  set t_vb=
+  setl t_vb=
+
+  " Disable relativenumber because scrolling is much slower.
+  if v:version >= 703 && g:ac_smooth_scroll_disable_relativenumber
+    let save_rnu = &l:rnu
+    if save_rnu
+      setl nu
+    endif
+  endif
 
   call s:scroll(a:cmd, step, sleep_time_msec, skip_redraw_line_size, wlcount, a:is_vmode)
 
+  " Restore relativenumber.
+  if v:version >= 703 && g:ac_smooth_scroll_disable_relativenumber
+    if save_rnu | setl rnu | endif
+  endif
+
   " Restore changed settings.
-  let &t_vb = save_t_vb
-  if !save_vb | set novb | endif
-  if save_cul | set cul | endif
+  let &l:t_vb = save_t_vb
+  if !save_vb | setl novb | endif
+  if save_cul | setl cul | endif
 
   " Do autocmd for Leave.
   call s:doautocmd_user('AcSmoothScrollLeave')
